@@ -7,13 +7,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 )
 
-var port = ":8090"
+const port = ":8090"
 
 //go:generate npm run --prefix frontend build
 //go:embed frontend/build
@@ -22,21 +18,20 @@ var content embed.FS
 func main() {
 	fmt.Println("Go React demo app, v1")
 
-	r := mux.NewRouter()
 	dev := flag.Bool("dev", false, "isdev")
 	flag.Parse()
-	if *dev {
-		r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/build")))
-	} else {
+
+	static := http.FileServer(http.Dir("./frontend/build"))
+	if !*dev {
 		fsys, err := fs.Sub(content, "frontend/build")
 		if err != nil {
 			panic(err)
 		}
-		r.PathPrefix("/").Handler(http.FileServer(http.FS(fsys)))
+		static = http.FileServer(http.FS(fsys))
 	}
-	loggedRouter := handlers.LoggingHandler(os.Stdout, r)
+	http.Handle("/", static)
 	log.Println("starting server on: http://localhost" + port)
-	err := http.ListenAndServe(port, loggedRouter)
+	err := http.ListenAndServe(port, nil)
 
 	if err != nil {
 		fmt.Println("Error starting server: ", err)
