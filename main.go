@@ -16,7 +16,7 @@ import (
 var port = ":8090"
 
 //go:generate npm run --prefix frontend build
-//go:embed frontend/dist
+//go:embed frontend/build
 var content embed.FS
 
 func main() {
@@ -26,9 +26,9 @@ func main() {
 	dev := flag.Bool("dev", false, "isdev")
 	flag.Parse()
 	if *dev {
-		r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/dist")))
+		r.PathPrefix("/").Handler(http.FileServer(http.Dir("./frontend/build")))
 	} else {
-		fsys, err := fs.Sub(content, "frontend/dist")
+		fsys, err := fs.Sub(content, "frontend/build")
 		if err != nil {
 			panic(err)
 		}
