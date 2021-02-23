@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 const port = ":8090"
@@ -20,22 +22,20 @@ func main() {
 
 	dev := flag.Bool("dev", false, "isdev")
 	flag.Parse()
-
-	static := http.FileServer(http.Dir("./frontend/build"))
-	if !*dev {
+	var static http.FileSystem = http.Dir("./frontend/build")
+	if !*dev { // use embedded in prod
 		fsys, err := fs.Sub(content, "frontend/build")
 		if err != nil {
 			panic(err)
 		}
-		static = http.FileServer(http.FS(fsys))
+		static = http.FS(fsys)
+		gin.SetMode(gin.ReleaseMode)
 	}
-	http.Handle("/", static)
-	log.Println("starting server on: http://localhost" + port)
-	err := http.ListenAndServe(port, nil)
 
-	if err != nil {
-		fmt.Println("Error starting server: ", err)
-	}
+	router := gin.Default()
+	router.StaticFS("/", static)
+	log.Println("starting server on: http://localhost" + port)
+	router.Run(port)
 
 	fmt.Println("Done ...")
 }
