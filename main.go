@@ -5,10 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/fs"
-	"log"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 const port = ":8090"
@@ -29,13 +26,11 @@ func main() {
 			panic(err)
 		}
 		static = http.FS(fsys)
-		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
-	router.StaticFS("/", static)
-	log.Println("starting server on: http://localhost" + port)
-	router.Run(port)
+	// Serve static files
+	http.Handle("/", http.FileServer(static))
+	http.ListenAndServe(port, nil)
 
 	fmt.Println("Done ...")
 }
